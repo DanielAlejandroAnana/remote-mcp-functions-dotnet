@@ -162,6 +162,14 @@ public class HelloToolWithAuth(ILogger<HelloToolWithAuth> logger, IHostEnvironme
         throw new InvalidOperationException("Could not find tenant ID claim in X-MS-CLIENT-PRINCIPAL.");
     }
 
+    private static readonly Lazy<ManagedIdentityCredential> FederatedManagedIdentity = new(() =>
+    {
+        string federatedMiClientId = Environment.GetEnvironmentVariable("OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID")
+            ?? throw new InvalidOperationException("OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID is not set.");
+
+        return new ManagedIdentityCredential(ManagedIdentityId.FromUserAssignedClientId(federatedMiClientId));
+    });
+
     /// <summary>
     /// Creates a callback that uses a managed identity to obtain a client assertion token.
     /// This proves the app's identity during the OBO token exchange, without needing a client secret.
@@ -173,15 +181,13 @@ public class HelloToolWithAuth(ILogger<HelloToolWithAuth> logger, IHostEnvironme
     /// </summary>
     private static Func<CancellationToken, Task<string>> BuildClientAssertionCallback()
     {
-        string federatedMiClientId = Environment.GetEnvironmentVariable("OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID")
-            ?? throw new InvalidOperationException("OVERRIDE_USE_MI_FIC_ASSERTION_CLIENTID is not set.");
-
+        var managedIdentity = FederatedManagedIdentity.Value;
         string tokenExchangeAudience = Environment.GetEnvironmentVariable("TokenExchangeAudience") ?? "api://AzureADTokenExchange";
-        var managedIdentity = new ManagedIdentityCredential(federatedMiClientId);
+        var tokenRequestContext = new TokenRequestContext([$"{tokenExchangeAudience}/.default"]);
 
         return async (cancellationToken) =>
             (await managedIdentity.GetTokenAsync(
-                new TokenRequestContext([$"{tokenExchangeAudience}/.default"]),
+                tokenRequestContext,
                 cancellationToken).ConfigureAwait(false)).Token;
     }
 }

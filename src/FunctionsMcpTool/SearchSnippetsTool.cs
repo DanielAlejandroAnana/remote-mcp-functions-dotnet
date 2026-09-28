@@ -19,11 +19,8 @@ namespace FunctionsMcpTool;
 /// and returns a <see cref="CallToolResult"/> whose <c>StructuredContent</c>
 /// matches the advertised output schema.
 /// </summary>
-internal class SearchSnippetsTool(ILogger<SearchSnippetsTool> logger)
+internal class SearchSnippetsTool(ILogger<SearchSnippetsTool> logger, BlobServiceClient blobServiceClient)
 {
-    private static BlobServiceClient GetBlobServiceClient() =>
-        new(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
-
     [Function(nameof(SearchSnippets))]
     public async Task<CallToolResult> SearchSnippets(
         [McpToolTrigger(SearchSnippetsToolName, SearchSnippetsToolDescription)]
@@ -42,7 +39,7 @@ internal class SearchSnippetsTool(ILogger<SearchSnippetsTool> logger)
         logger.LogInformation(
             "Searching snippets with prefix '{Prefix}' (limit {Limit})", prefix, limit);
 
-        var container = GetBlobServiceClient().GetBlobContainerClient("snippets");
+        var container = blobServiceClient.GetBlobContainerClient("snippets");
         await container.CreateIfNotExistsAsync();
 
         var matches = new List<string>();

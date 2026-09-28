@@ -9,12 +9,9 @@ using static FunctionsMcpTool.ToolsInformation;
 
 namespace FunctionsMcpTool;
 
-public class SnippetsTool(ILogger<SnippetsTool> logger)
+public class SnippetsTool(ILogger<SnippetsTool> logger, BlobServiceClient blobServiceClient)
 {
     private const string BlobPath = "snippets/{mcptoolargs.Name}.json";
-
-    private static BlobServiceClient GetBlobServiceClient() =>
-        new(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
 
     [Function(nameof(GetSnippet))]
     public Snippet? GetSnippet(
@@ -92,7 +89,7 @@ public class SnippetsTool(ILogger<SnippetsTool> logger)
             IEnumerable<Dictionary<string, object>> snippetItems
     )
     {
-        var containerClient = GetBlobServiceClient().GetBlobContainerClient("snippets");
+        var containerClient = blobServiceClient.GetBlobContainerClient("snippets");
         await containerClient.CreateIfNotExistsAsync();
 
         var savedSnippets = new List<string>();
