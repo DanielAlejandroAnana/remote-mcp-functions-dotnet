@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy dotnet core project to Azure Function App - func-qpceol5ze5lfw
+name: Build and deploy dotnet FunctionsMcpTool project to Azure Function App - func-qpceol5ze5lfw
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -36,11 +36,11 @@ jobs:
         shell: bash
         run: |
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
-          dotnet build --configuration Release --output ./output
+          dotnet publish --configuration Release --output ./output
           popd
       
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_AA9E91D1F8844B6D86F6D31143F452D6 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C57DB2FDF2CE4BAB863897370A6A504E }}
